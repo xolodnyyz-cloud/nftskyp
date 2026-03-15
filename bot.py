@@ -114,11 +114,11 @@ class NFTParser:
             multiplier = name_multiplier * number_multiplier
         
         random_factor = random.uniform(0.95, 1.05)
-        market_price_rub = round(base_price_rub * multiplier * random_factor)
-        our_price_rub = round(market_price_rub * 1.3)
+        market_price_rub = round(base_price_rub * multiplier * random_factor, 2)
+        our_price_rub = round(market_price_rub * 1.3, 2)
         
-        market_price_stars = round(market_price_rub / STARS_TO_RUB)
-        our_price_stars = round(our_price_rub / STARS_TO_RUB)
+        market_price_stars = round(market_price_rub / STARS_TO_RUB, 2)
+        our_price_stars = round(our_price_rub / STARS_TO_RUB, 2)
         
         return {
             'market_rub': market_price_rub,
@@ -365,13 +365,10 @@ async def handle_payment_details(update: Update, context: ContextTypes.DEFAULT_T
         currency = '⭐️'
     
     text = (
-        "📋 **Итог сделки:**\n\n"
-        f"📎 **NFT:** {nft_info.get('link')}\n"
-        f"💳 **Способ оплаты:** {payment_name}\n"
-        f"🏷 **Рынок:** ~{market} {currency}\n"
-        f"💵 **Сумма:** {amount} {currency}\n"
-        f"📝 **Реквизиты:** {details}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"📎 **Ваш NFT:** {nft_info.get('link')}\n"
+        f"💳 **Способ оплаты:** {payment_name}\n\n"
+        f"🏷 **Рыночная стоимость:** ~{market} {currency}\n"
+        f"💰 **Наше предложение:** {amount} {currency}\n\n"
         f"💬 Я предлагаю вам за ваш NFT {nft_info.get('link')} сумму {amount} {currency}\n\n"
         "Если согласны — нажмите **Да**, если нет — **Нет** 👇"
     )
@@ -424,7 +421,8 @@ async def confirm_deal(query, context):
         f"📎 **NFT:** {nft_info.get('link')}\n"
         f"💵 **Сумма выплаты:** {amount} {currency}\n"
         f"💳 **Способ оплаты:** {payment_name}\n\n"
-        f"После получения NFT менеджер переведёт вам оплату в течение 5–15 минут.\n\n"
+        f"Менеджер проверит подарок и переведёт оплату на ваши реквизиты.\n"
+        f"⚡️ Среднее время сделки: 5–15 минут\n\n"
         f"⚠️ **Важно:** передавайте NFT ТОЛЬКО через @{MANAGER_USERNAME}. "
         f"Мы не несём ответственности за сделки вне официального канала."
     )
@@ -527,16 +525,16 @@ async def cancel_sale(query, context):
 
 async def show_instructions(query, context):
     instructions = (
-        "📋 **Как проходит сделка:**\n\n"
-        "1️⃣ Вы отправляете ссылку на ваш NFT-подарок\n"
-        "2️⃣ Бот автоматически анализирует его стоимость\n"
-        "3️⃣ Вы получаете предложение на 30% выше рынка\n"
-        "4️⃣ Вы выбираете способ оплаты\n"
-        "5️⃣ Вводите реквизиты для выплаты\n"
-        "6️⃣ Подтверждаете сделку\n"
-        "7️⃣ Отправляете NFT менеджеру и нажимаете 'Подарок передан'\n"
-        "8️⃣ Получаете оплату в течение 5-15 минут\n\n"
-        "⚡ Вся сделка занимает не более 10 минут!"
+        "🤝 **Как проводится сделка:**\n\n"
+        "1. Вы присылаете ссылку на NFT-подарок\n"
+        "2. Бот считает рыночную цену по параметрам: модель, фон, узор\n"
+        "3. Вы выбираете способ оплаты\n"
+        "4. Бот озвучивает свою сумму в вашей валюте\n\n"
+        "Пример: Я предлагаю вам за ваш NFT https://t.me/nft/HeartLocket-2  — 281.511 Рублей\n"
+        "Если согласны — нажмите Да, если нет — Нет\n\n"
+        "5. При согласии — отправьте NFT менеджеру @hostelman\n"
+        "6. Менеджер проверяет подарок и переводит оплату на ваши реквизиты\n\n"
+        "⚡️ Среднее время сделки: 5–15 минут"
     )
     
     keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
