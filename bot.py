@@ -558,7 +558,18 @@ async def show_support(query, context):
 async def back_to_main(query, context):
     context.user_data.clear()
     
-    text = "🏠 **Главное меню**\n\nВыберите действие:"
+    user = query.from_user
+    first_name = user.first_name
+    
+    welcome_text = (
+        f"🌟 Добро пожаловать в Автоматическую Скупку NFT-подарков в Telegram, {first_name}!\n\n"
+        "Мы - профессиональный сервис по выкупу NFT-подарков выше рыночной стоимости.\n\n"
+        "🤖 Наш бот автоматически оценивает ваш NFT по ссылке и предлагает цену на 30% выше рынка\n\n"
+        "✅ Тысячи успешных сделок\n"
+        "⚡ Быстрые выплаты\n"
+        "🔒 Полная безопасность\n\n"
+        "Выберите действие ниже:"
+    )
     
     keyboard = [
         [InlineKeyboardButton("💰 Продать NFT", callback_data='sell')],
@@ -567,7 +578,7 @@ async def back_to_main(query, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    await query.edit_message_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
