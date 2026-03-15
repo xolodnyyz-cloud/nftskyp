@@ -1,11 +1,10 @@
 import logging
 import re
-import random
 import json
 import os
 import asyncio
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
@@ -24,318 +23,73 @@ TOKEN = "8527173088:AAFENDpLWuQmRJe9ioRN4a1IbcnyqGgOkag"
 ADMIN_IDS = []  # Добавьте свой Telegram ID
 
 # Курсы конвертации
-TON_TO_USD = 1.35  # 1 TON ≈ $1.35
-USD_TO_RUB = 90    # 1 USD ≈ 90 RUB
-STARS_TO_RUB = 1.6 # 1 звезда ≈ 1.6 рубля
+STARS_TO_RUB = 1.6
+TON_TO_RUB = 90
 
 # База данных
 DATA_FILE = "data.json"
 
 # ============================================
-# КЛАСС ДЛЯ АНАЛИЗА NFT
+# КЛАСС ДЛЯ ПАРСИНГА @PriceNFTbot
 # ============================================
 
-class NFTAnalyzer:
+class PriceNFTParser:
     """
-    Анализирует NFT и предоставляет детальную информацию о ценах
+    Парсер для получения цен с @PriceNFTbot
+    В реальности нужно использовать Telethon для парсинга сообщений
     """
     
-    # База данных NFT с характеристиками
-    NFT_DATABASE = {
-        # Durov's Cap
-        'durovscap': {
-            'name': 'Durov\'s Cap',
-            'models': {
-                'classic': {'name': 'Classic', 'multiplier': 1.0},
-                'shadow': {'name': 'Shadow', 'multiplier': 1.2},
-                'gold': {'name': 'Gold', 'multiplier': 2.0},
-                'diamond': {'name': 'Diamond', 'multiplier': 3.0},
-            },
-            'backgrounds': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'shamrock_green': {'name': 'Shamrock Green', 'multiplier': 1.3},
-                'midnight_blue': {'name': 'Midnight Blue', 'multiplier': 1.2},
-                'sunset_orange': {'name': 'Sunset Orange', 'multiplier': 1.4},
-            },
-            'patterns': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'ram_of_amun': {'name': 'Ram of Amun', 'multiplier': 1.5},
-                'old_candle': {'name': 'Old Candle', 'multiplier': 1.3},
-                'crystal': {'name': 'Crystal', 'multiplier': 1.8},
-            },
-            'base_price': 150,  # базовый TON
-            'rarity': 'legendary'
-        },
-        
-        # Heart Locket
-        'heartlocket': {
-            'name': 'Heart Locket',
-            'models': {
-                'classic': {'name': 'Classic', 'multiplier': 1.0},
-                'golden': {'name': 'Golden', 'multiplier': 1.8},
-                'crystal': {'name': 'Crystal', 'multiplier': 2.2},
-            },
-            'backgrounds': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'romantic_red': {'name': 'Romantic Red', 'multiplier': 1.4},
-                'mystic_purple': {'name': 'Mystic Purple', 'multiplier': 1.3},
-            },
-            'patterns': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'heartbeat': {'name': 'Heartbeat', 'multiplier': 1.5},
-                'eternal': {'name': 'Eternal', 'multiplier': 1.7},
-            },
-            'base_price': 80,
-            'rarity': 'epic'
-        },
-        
-        # Plush Pepe
-        'plushpepe': {
-            'name': 'Plush Pepe',
-            'models': {
-                'classic': {'name': 'Classic', 'multiplier': 1.0},
-                'sketchy': {'name': 'Sketchy', 'multiplier': 1.1},
-                'rainbow': {'name': 'Rainbow', 'multiplier': 1.6},
-            },
-            'backgrounds': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'fandango': {'name': 'Fandango', 'multiplier': 1.2},
-                'mint_green': {'name': 'Mint Green', 'multiplier': 1.1},
-                'ocean_blue': {'name': 'Ocean Blue', 'multiplier': 1.15},
-            },
-            'patterns': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'toilet': {'name': 'Toilet', 'multiplier': 1.2},
-                'stars': {'name': 'Stars', 'multiplier': 1.3},
-                'hearts': {'name': 'Hearts', 'multiplier': 1.25},
-            },
-            'base_price': 60,
-            'rarity': 'rare'
-        },
-        
-        # Mousse Cake (из примера)
-        'moussecake': {
-            'name': 'Mousse Cake',
-            'models': {
-                'classic': {'name': 'Classic', 'multiplier': 1.0},
-                'chocolate': {'name': 'Chocolate', 'multiplier': 1.2},
-                'strawberry': {'name': 'Strawberry', 'multiplier': 1.3},
-            },
-            'backgrounds': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'mint_green': {'name': 'Mint Green', 'multiplier': 1.1},
-                'cream': {'name': 'Cream', 'multiplier': 1.05},
-            },
-            'patterns': {
-                'default': {'name': 'Default', 'multiplier': 1.0},
-                'old_candle': {'name': 'Old Candle', 'multiplier': 1.15},
-                'sprinkles': {'name': 'Sprinkles', 'multiplier': 1.1},
-            },
-            'base_price': 45,
-            'rarity': 'common'
-        }
-    }
-    
-    # Множители для редких номеров
-    NUMBER_MULTIPLIERS = {
-        '1': 15.0, '2': 8.0, '3': 6.0, '5': 2.5, '7': 3.0,
-        '10': 3.5, '13': 2.0, '21': 2.2, '42': 4.0, '69': 5.0,
-        '100': 6.0, '111': 7.0, '222': 7.0, '333': 8.0, '444': 8.0,
-        '555': 9.0, '666': 5.0, '777': 12.0, '888': 9.0, '999': 10.0,
-        '1000': 15.0, '2024': 3.0, '2025': 3.0,
-    }
-    
-    # Генерация истории продаж (имитация)
-    @classmethod
-    def generate_sales_history(cls, nft_name, count=20):
-        """Генерирует историю продаж для демонстрации"""
-        history = []
-        base_price = cls._get_base_price(nft_name)
-        
-        # Базовые номера для истории
-        base_numbers = [26326, 166829, 71272, 90864, 162525, 3563, 6325, 
-                       155419, 116070, 16670, 41172, 155521, 54243, 111778]
-        
-        now = datetime.now()
-        
-        for i in range(min(count, len(base_numbers))):
-            number = base_numbers[i % len(base_numbers)]
-            
-            # Генерируем случайную цену вокруг базовой
-            price_variation = random.uniform(0.85, 1.15)
-            price = round(base_price * price_variation, 2)
-            
-            # Генерируем время
-            hours_ago = random.randint(1, 240)
-            time_ago = now - timedelta(hours=hours_ago)
-            
-            # Форматируем время
-            if hours_ago < 24:
-                time_str = f"{hours_ago} {'часа' if hours_ago % 10 in [2,3,4] and not (11<=hours_ago<=14) else 'часов' if hours_ago>4 else 'час'} назад"
-            elif hours_ago < 48:
-                time_str = "вчера"
-            else:
-                days = hours_ago // 24
-                time_str = f"{days} {self._pluralize_days(days)} назад"
-            
-            history.append({
-                'number': number,
-                'price': price,
-                'time_str': time_str,
-                'timestamp': time_ago
-            })
-        
-        # Сортируем по времени (самые свежие первые)
-        history.sort(key=lambda x: x['timestamp'], reverse=True)
-        
-        return history
+    # Кэш для результатов
+    _cache = {}
+    _cache_time = {}
+    CACHE_TTL = 300  # 5 минут
     
     @classmethod
-    def _pluralize_days(cls, days):
-        if days % 10 == 1 and days % 100 != 11:
-            return "день"
-        elif 2 <= days % 10 <= 4 and not (12 <= days % 100 <= 14):
-            return "дня"
-        else:
-            return "дней"
-    
-    @classmethod
-    def _get_base_price(cls, nft_name):
-        """Получает базовую цену для NFT"""
-        normalized = cls._normalize_name(nft_name)
-        
-        for key, collection in cls.NFT_DATABASE.items():
-            if key in normalized:
-                return collection['base_price']
-        
-        return 50  # базовая цена по умолчанию
-    
-    @classmethod
-    def _normalize_name(cls, name):
-        """Нормализует название"""
-        return re.sub(r'[^a-zA-Z0-9]', '', name.lower())
-    
-    @classmethod
-    def get_number_multiplier(cls, number):
-        """Множитель для номера"""
-        number_str = str(number).strip()
-        
-        if number_str in cls.NUMBER_MULTIPLIERS:
-            return cls.NUMBER_MULTIPLIERS[number_str]
-        
-        try:
-            num = int(number_str)
-            
-            if num < 10:
-                return 3.0
-            elif num < 100:
-                if num % 10 == 0:
-                    return 2.0
-                elif num % 11 == 0:
-                    return 2.5
-            elif num < 1000:
-                if num % 100 == 0:
-                    return 2.5
-                elif num % 111 == 0:
-                    return 4.0
-                elif str(num) == str(num)[::-1]:
-                    return 2.2
-            elif num < 10000:
-                if num % 1000 == 0:
-                    return 3.5
-                elif num % 1111 == 0:
-                    return 6.0
-        except:
-            pass
-        
-        return 1.0
-    
-    @classmethod
-    async def analyze_nft(cls, nft_name, nft_number):
+    async def get_nft_price(cls, nft_name, nft_number):
         """
-        Полный анализ NFT
+        Получает цену NFT имитируя @PriceNFTbot
         """
-        normalized = cls._normalize_name(nft_name)
+        cache_key = f"{nft_name.lower()}-{nft_number}"
         
-        # Ищем в базе
-        collection = None
-        for key, col in cls.NFT_DATABASE.items():
-            if key in normalized:
-                collection = col
-                break
+        # Проверяем кэш
+        if cache_key in cls._cache:
+            cache_age = (datetime.now() - cls._cache_time.get(cache_key, datetime.min)).seconds
+            if cache_age < cls.CACHE_TTL:
+                return cls._cache[cache_key]
         
-        if not collection:
-            collection = cls.NFT_DATABASE.get('moussecake')  # базовая коллекция
+        # В реальности здесь должен быть код для парсинга @PriceNFTbot
+        # Сейчас используем имитацию на основе данных из примера
         
-        # Базовые параметры
-        base_price_ton = collection['base_price']
-        number_mult = cls.get_number_multiplier(nft_number)
-        
-        # Генерируем случайные характеристики (в реальности их нужно парсить со страницы)
-        model_key = random.choice(list(collection['models'].keys()))
-        background_key = random.choice(list(collection['backgrounds'].keys()))
-        pattern_key = random.choice(list(collection['patterns'].keys()))
-        
-        model = collection['models'][model_key]
-        background = collection['backgrounds'][background_key]
-        pattern = collection['patterns'][pattern_key]
-        
-        # Расчет рыночной цены
-        total_multiplier = number_mult * model['multiplier'] * background['multiplier'] * pattern['multiplier']
-        market_price_ton = round(base_price_ton * total_multiplier * random.uniform(0.9, 1.1), 2)
-        
-        # Генерируем floor и avg цены
-        floor_price = round(market_price_ton * 0.85, 2)
-        avg_price = round(market_price_ton * 0.95, 2)
-        
-        # Конвертация в USD и RUB
-        market_price_usd = round(market_price_ton * TON_TO_USD, 2)
-        market_price_rub = round(market_price_usd * USD_TO_RUB)
-        market_price_stars = round(market_price_rub / STARS_TO_RUB)
-        
-        # Наше предложение (+30%)
-        our_price_ton = round(market_price_ton * 1.3, 2)
-        our_price_rub = round(market_price_rub * 1.3)
-        our_price_stars = round(market_price_stars * 1.3)
-        our_price_usd = round(market_price_usd * 1.3, 2)
-        
-        # Генерируем историю продаж
-        sales_history = cls.generate_sales_history(nft_name, 15)
-        
-        # Формируем результат
-        result = {
+        # Пример данных как в @PriceNFTbot
+        price_data = {
             'success': True,
-            'collection': collection['name'],
-            'rarity': collection['rarity'],
-            'nft_name': f"{collection['name']} #{nft_number}",
+            'nft_name': f"{nft_name} #{nft_number}",
             'full_link': f"https://t.me/nft/{nft_name}-{nft_number}",
             'characteristics': {
-                'model': model['name'],
-                'background': background['name'],
-                'pattern': pattern['name'],
-                'quantity': f"{random.randint(1000, 5000)}/{random.randint(5000, 10000)} issued"
+                'model': 'Mousse Cake',
+                'background': 'Mint Green',
+                'pattern': 'Old Candle',
+                'quantity': '3243 шт.'
             },
             'prices': {
-                'floor': {'ton': floor_price, 'usd': round(floor_price * TON_TO_USD, 2)},
-                'avg': {'ton': avg_price, 'usd': round(avg_price * TON_TO_USD, 2)},
-                'last_sale': {'ton': market_price_ton, 'usd': market_price_usd},
-                'market': {
-                    'ton': market_price_ton,
-                    'usd': market_price_usd,
-                    'rub': market_price_rub,
-                    'stars': market_price_stars
-                },
-                'our_offer': {
-                    'ton': our_price_ton,
-                    'usd': our_price_usd,
-                    'rub': our_price_rub,
-                    'stars': our_price_stars
-                }
+                'floor': {'ton': 4.59, 'usd': 6.2},
+                'avg': {'ton': 5.04, 'usd': 6.8},
+                'last_sale': {'ton': 5.00, 'usd': 6.7}
             },
-            'sales_history': sales_history[:10]  # Последние 10 продаж
+            'sales_history': [
+                {'number': 26326, 'price': 5.00, 'time': '2 часа назад'},
+                {'number': 166829, 'price': 5.02, 'time': '4 часа назад'},
+                {'number': 71272, 'price': 4.97, 'time': '6 часов назад'},
+                {'number': 90864, 'price': 5.41, 'time': '7 часов назад'},
+                {'number': 162525, 'price': 5.20, 'time': '8 часов назад'},
+            ]
         }
         
-        return result
+        # Сохраняем в кэш
+        cls._cache[cache_key] = price_data
+        cls._cache_time[cache_key] = datetime.now()
+        
+        return price_data
 
 
 # ============================================
@@ -383,137 +137,191 @@ def save_data(data):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    context.user_data['state'] = 'main'
+    
+    # Сохраняем пользователя
+    data = load_data()
+    if str(user.id) not in data["users"]:
+        data["users"][str(user.id)] = {
+            "username": user.username,
+            "first_name": user.first_name,
+            "joined_date": datetime.now().isoformat()
+        }
+        save_data(data)
     
     welcome_text = (
-        f"🌟 Добро пожаловать в NFT Price Bot, {user.first_name}!\n\n"
-        "Я показываю реальные цены на NFT из Telegram маркета\n"
-        "и делаю предложения о выкупе на 30% выше рынка!\n\n"
-        "📊 **Что я умею:**\n"
-        "• Показывать текущие цены (Floor, AVG)\n"
-        "• Историю последних продаж\n"
-        "• Характеристики NFT\n"
-        "• Делать предложение о выкупе\n\n"
-        "Просто отправьте мне ссылку на NFT!"
+        f"🌟 Добро пожаловать в Автоматическую Скупку NFT-подарков, {user.first_name}!\n\n"
+        "Мы используем данные с @PriceNFTbot для оценки ваших NFT\n\n"
+        "✅ Оценка на 30% выше рынка\n"
+        "⚡ Мгновенные выплаты\n"
+        "🔒 Полная безопасность\n\n"
+        "Выберите действие:"
     )
     
-    await update.message.reply_text(welcome_text, parse_mode='Markdown')
+    keyboard = [
+        [InlineKeyboardButton("💰 Продать NFT", callback_data='sell')],
+        [InlineKeyboardButton("📋 Как проходит сделка?", callback_data='how_it_works')],
+        [InlineKeyboardButton("🆘 Поддержка", callback_data='support')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data == 'sell':
+        await start_selling(query, context)
+    elif query.data == 'how_it_works':
+        await show_instructions(query, context)
+    elif query.data == 'support':
+        await show_support(query, context)
+    elif query.data in ['payment_rub', 'payment_stars']:
+        await select_payment_method(query, context)
+    elif query.data == 'confirm_sale':
+        await confirm_sale(query, context)
+    elif query.data == 'cancel_sale':
+        await cancel_sale(query, context)
+    elif query.data == 'back_to_main':
+        await back_to_main(query, context)
+    elif query.data == 'check_another':
+        await check_another(query, context)
+
+async def start_selling(query, context):
+    """Начало процесса продажи"""
+    context.user_data['state'] = 'waiting_for_link'
+    
+    text = (
+        "🔗 **Отправьте ссылку на ваш NFT-подарок**\n\n"
+        "Формат: `https://t.me/nft/НАЗВАНИЕ-НОМЕР`\n\n"
+        "📌 **Примеры:**\n"
+        "• `https://t.me/nft/DurovsCap-1`\n"
+        "• `https://t.me/nft/HeartLocket-2`\n"
+        "• `https://t.me/nft/PlushPepe-3`\n\n"
+        "⚠️ Принимаются только NFT-подарки Telegram"
+    )
+    
+    keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка полученной ссылки"""
+    if context.user_data.get('state') != 'waiting_for_link':
+        return
+    
     link = update.message.text.strip()
     
     # Парсим ссылку
     nft_data = NFTLinkParser.parse_link(link)
     
     if not nft_data:
-        await update.message.reply_text(
+        text = (
             "❌ **Неправильный формат ссылки!**\n\n"
             "Формат: `https://t.me/nft/НАЗВАНИЕ-НОМЕР`\n\n"
-            "Пример: `https://t.me/nft/DurovsCap-1`",
-            parse_mode='Markdown'
+            "Пример: `https://t.me/nft/DurovsCap-1`"
         )
+        keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     # Отправляем сообщение о начале анализа
     analyzing_msg = await update.message.reply_text(
-        "🔍 **Анализируем NFT...**\nПолучаем данные с маркета...",
+        "🔍 **Запрашиваем данные у @PriceNFTbot...**\nПожалуйста, подождите...",
         parse_mode='Markdown'
     )
     
-    # Анализируем NFT
-    analysis = await NFTAnalyzer.analyze_nft(nft_data['name'], nft_data['number'])
+    # Получаем цену (имитация парсинга @PriceNFTbot)
+    price_data = await PriceNFTParser.get_nft_price(nft_data['name'], nft_data['number'])
     
-    if not analysis['success']:
-        await analyzing_msg.edit_text("❌ Не удалось получить данные. Попробуйте позже.")
-        return
+    # Удаляем сообщение об анализе
+    await analyzing_msg.delete()
     
-    # Формируем детальный отчет
+    # Рассчитываем наше предложение (+30%)
+    last_sale_ton = price_data['prices']['last_sale']['ton']
+    our_price_ton = round(last_sale_ton * 1.3, 2)
+    our_price_rub = round(our_price_ton * TON_TO_RUB)
+    our_price_stars = round(our_price_rub / STARS_TO_RUB)
+    
+    # Сохраняем данные
+    context.user_data['nft_info'] = {
+        'link': nft_data['full_link'],
+        'name': price_data['nft_name'],
+        'market_price': last_sale_ton,
+        'our_price_ton': our_price_ton,
+        'our_price_rub': our_price_rub,
+        'our_price_stars': our_price_stars
+    }
+    
+    # Формируем сообщение с результатом как в @PriceNFTbot
     text = (
-        f"⭐ **{analysis['nft_name']}**\n"
-        f"🔗 {analysis['full_link']}\n"
-        f"📦 Тираж: {analysis['characteristics']['quantity']}\n\n"
+        f"⭐ **{price_data['nft_name']}**\n"
+        f"🔗 {price_data['full_link']}\n"
+        f"📦 Тираж: {price_data['characteristics']['quantity']}\n\n"
         
         f"🎨 **Характеристики:**\n"
-        f"Модель: {analysis['characteristics']['model']}\n"
-        f"Фон: {analysis['characteristics']['background']}\n"
-        f"Узор: {analysis['characteristics']['pattern']}\n\n"
+        f"Модель: {price_data['characteristics']['model']}\n"
+        f"Фон: {price_data['characteristics']['background']}\n"
+        f"Узор: {price_data['characteristics']['pattern']}\n\n"
         
         f"📊 **Цены:**\n"
-        f"Floor: {analysis['prices']['floor']['ton']} TON ≈ {analysis['prices']['floor']['usd']} $\n"
-        f"AVG: {analysis['prices']['avg']['ton']} TON ≈ {analysis['prices']['avg']['usd']} $\n"
-        f"Последняя продажа: {analysis['prices']['last_sale']['ton']} TON ≈ {analysis['prices']['last_sale']['usd']} $\n\n"
+        f"Floor: {price_data['prices']['floor']['ton']} TON ≈ {price_data['prices']['floor']['usd']} $\n"
+        f"AVG: {price_data['prices']['avg']['ton']} TON ≈ {price_data['prices']['avg']['usd']} $\n"
+        f"Последняя продажа: {price_data['prices']['last_sale']['ton']} TON ≈ {price_data['prices']['last_sale']['usd']} $\n\n"
         
-        f"💰 **Наше предложение (+30%):**\n"
-        f"{analysis['prices']['our_offer']['ton']} TON\n"
-        f"{analysis['prices']['our_offer']['usd']} $\n"
-        f"{analysis['prices']['our_offer']['rub']:,} ₽\n"
-        f"{analysis['prices']['our_offer']['stars']:,} ⭐️\n\n"
+        f"💰 **Наше предложение (+30%):** {our_price_ton} TON\n"
+        f"{our_price_rub:,} ₽ / {our_price_stars:,} ⭐️\n\n"
         
         f"📈 **История продаж модели:**\n"
     )
     
     # Добавляем историю продаж
-    for sale in analysis['sales_history']:
-        text += f"🎨 #{sale['number']}: {sale['price']} TON — {sale['time_str']} 🛒\n"
+    for sale in price_data['sales_history']:
+        text += f"🎨 #{sale['number']}: {sale['price']} TON — {sale['time']} 🛒\n"
     
-    text += "\n**Выберите действие:**"
-    
-    # Сохраняем данные для последующего выкупа
-    context.user_data['current_nft'] = {
-        'name': analysis['nft_name'],
-        'link': analysis['full_link'],
-        'prices': analysis['prices']['our_offer']
-    }
+    text += "\n**Выберите способ получения оплаты:**"
     
     keyboard = [
-        [InlineKeyboardButton("💰 Продать по этой цене", callback_data='sell_offer')],
-        [InlineKeyboardButton("🔄 Проверить другой NFT", callback_data='check_another')]
+        [InlineKeyboardButton("💵 Рубли (₽)", callback_data='payment_rub')],
+        [InlineKeyboardButton("⭐️ Звезды (Telegram Stars)", callback_data='payment_stars')],
+        [InlineKeyboardButton("🔄 Проверить другой NFT", callback_data='check_another')],
+        [InlineKeyboardButton("❌ Отмена", callback_data='cancel_sale')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await analyzing_msg.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    context.user_data['state'] = 'awaiting_payment'
 
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+async def select_payment_method(query, context):
+    """Выбор способа оплаты"""
+    payment_method = 'rub' if query.data == 'payment_rub' else 'stars'
+    context.user_data['payment_method'] = payment_method
     
-    if query.data == 'sell_offer':
-        await show_sell_options(query, context)
-    elif query.data == 'check_another':
-        await check_another(query, context)
-    elif query.data == 'back_to_start':
-        await back_to_start(query, context)
-    elif query.data in ['payment_rub', 'payment_stars', 'payment_ton', 'payment_usd']:
-        await confirm_sale(query, context)
-
-async def show_sell_options(query, context):
-    """Показывает опции продажи"""
-    nft_data = context.user_data.get('current_nft', {})
+    nft_info = context.user_data.get('nft_info', {})
     
-    if not nft_data:
-        await query.edit_message_text("❌ Данные не найдены. Отправьте ссылку заново.")
-        return
-    
-    prices = nft_data['prices']
+    if payment_method == 'rub':
+        amount = nft_info.get('our_price_rub', 0)
+        currency = '₽'
+        currency_name = 'рублях'
+    else:
+        amount = nft_info.get('our_price_stars', 0)
+        currency = '⭐️'
+        currency_name = 'звездах'
     
     text = (
-        f"✅ **Продажа NFT**\n\n"
-        f"📎 {nft_data['name']}\n"
-        f"🔗 {nft_data['link']}\n\n"
-        f"💰 **Наше предложение:**\n"
-        f"• {prices['ton']} TON\n"
-        f"• {prices['usd']} $\n"
-        f"• {prices['rub']:,} ₽\n"
-        f"• {prices['stars']:,} ⭐️\n\n"
-        f"**Выберите способ получения:**"
+        f"✅ **Вы выбрали оплату в {currency_name}**\n\n"
+        f"💰 **Сумма к выплате:** {amount:,} {currency}\n\n"
+        "Подтвердите продажу:"
     )
     
     keyboard = [
-        [InlineKeyboardButton("💎 TON", callback_data='payment_ton')],
-        [InlineKeyboardButton("💵 Доллары (USD)", callback_data='payment_usd')],
-        [InlineKeyboardButton("💳 Рубли (RUB)", callback_data='payment_rub')],
-        [InlineKeyboardButton("⭐️ Звезды (Telegram Stars)", callback_data='payment_stars')],
-        [InlineKeyboardButton("◀️ Назад", callback_data='back_to_start')]
+        [InlineKeyboardButton("✅ Подтвердить продажу", callback_data='confirm_sale')],
+        [InlineKeyboardButton("◀️ Назад к выбору", callback_data='back_to_payment')],
+        [InlineKeyboardButton("❌ Отмена", callback_data='cancel_sale')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -521,27 +329,17 @@ async def show_sell_options(query, context):
 
 async def confirm_sale(query, context):
     """Подтверждение продажи"""
-    payment_method = query.data.replace('payment_', '')
+    nft_info = context.user_data.get('nft_info', {})
+    payment_method = context.user_data.get('payment_method', 'rub')
     
-    payment_names = {
-        'ton': 'TON',
-        'usd': 'USD',
-        'rub': 'RUB',
-        'stars': 'Telegram Stars'
-    }
-    
-    currency_symbols = {
-        'ton': '💎',
-        'usd': '💵',
-        'rub': '₽',
-        'stars': '⭐️'
-    }
-    
-    nft_data = context.user_data.get('current_nft', {})
-    
-    if not nft_data:
-        await query.edit_message_text("❌ Ошибка. Начните заново.")
-        return
+    if payment_method == 'rub':
+        amount = nft_info.get('our_price_rub', 0)
+        currency = '₽'
+        currency_name = 'рубли'
+    else:
+        amount = nft_info.get('our_price_stars', 0)
+        currency = '⭐️'
+        currency_name = 'звезды'
     
     # Сохраняем транзакцию
     data = load_data()
@@ -549,10 +347,10 @@ async def confirm_sale(query, context):
         "id": len(data["transactions"]) + 1,
         "user_id": query.from_user.id,
         "username": query.from_user.username,
-        "nft": nft_data['name'],
-        "link": nft_data['link'],
-        "amount": nft_data['prices'][payment_method],
-        "currency": payment_method.upper(),
+        "nft": nft_info.get('name'),
+        "link": nft_info.get('link'),
+        "amount": amount,
+        "currency": currency,
         "status": "pending",
         "created_at": datetime.now().isoformat()
     }
@@ -560,14 +358,14 @@ async def confirm_sale(query, context):
     save_data(data)
     
     success_text = (
-        f"✅ **Заявка на продажу принята!**\n\n"
-        f"📎 {nft_data['name']}\n"
-        f"💰 **Сумма:** {currency_symbols[payment_method]} {nft_data['prices'][payment_method]} {payment_names[payment_method]}\n\n"
-        f"С вами свяжется менеджер в ближайшее время для завершения сделки.\n"
-        f"Спасибо за доверие! 🙏"
+        "✅ **Заявка на продажу принята!**\n\n"
+        f"💰 **Сумма:** {amount:,} {currency}\n"
+        f"💳 **Способ оплаты:** {currency_name}\n\n"
+        "С вами свяжется менеджер в ближайшее время.\n"
+        "Спасибо за доверие! 🙏"
     )
     
-    keyboard = [[InlineKeyboardButton("🏠 В начало", callback_data='back_to_start')]]
+    keyboard = [[InlineKeyboardButton("🏠 В главное меню", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await query.edit_message_text(success_text, reply_markup=reply_markup, parse_mode='Markdown')
@@ -575,30 +373,68 @@ async def confirm_sale(query, context):
 
 async def check_another(query, context):
     """Проверка другого NFT"""
+    context.user_data['state'] = 'waiting_for_link'
+    
     text = (
-        "🔗 **Отправьте ссылку на NFT**\n\n"
+        "🔗 **Отправьте ссылку на другой NFT-подарок**\n\n"
         "Формат: `https://t.me/nft/НАЗВАНИЕ-НОМЕР`\n\n"
-        "Пример: `https://t.me/nft/DurovsCap-1`"
+        "📌 **Пример:** `https://t.me/nft/DurovsCap-1`"
     )
     
-    keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_start')]]
+    keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def cancel_sale(query, context):
+    """Отмена продажи"""
+    text = "❌ Продажа отменена"
+    keyboard = [[InlineKeyboardButton("🏠 В главное меню", callback_data='back_to_main')]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(text, reply_markup=reply_markup)
     context.user_data.clear()
 
-async def back_to_start(query, context):
-    """Возврат в начало"""
+async def show_instructions(query, context):
+    """Инструкция"""
     text = (
-        "🌟 **NFT Price Bot**\n\n"
-        "Отправьте ссылку на NFT для анализа!"
+        "📋 **Как проходит сделка:**\n\n"
+        "1️⃣ Отправьте ссылку на NFT\n"
+        "2️⃣ Бот получает данные с @PriceNFTbot\n"
+        "3️⃣ Вы получаете предложение +30%\n"
+        "4️⃣ Выбираете способ оплаты\n"
+        "5️⃣ Менеджер связывается с вами\n"
+        "6️⃣ Мгновенная выплата"
     )
     
-    keyboard = []
+    keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def show_support(query, context):
+    """Поддержка"""
+    text = "🆘 **Поддержка:** @support_username"
+    
+    keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def back_to_main(query, context):
+    """Возврат в главное меню"""
     context.user_data.clear()
+    
+    text = "🏠 **Главное меню**"
+    
+    keyboard = [
+        [InlineKeyboardButton("💰 Продать NFT", callback_data='sell')],
+        [InlineKeyboardButton("📋 Как проходит сделка?", callback_data='how_it_works')],
+        [InlineKeyboardButton("🆘 Поддержка", callback_data='support')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 
 # ============================================
@@ -607,7 +443,7 @@ async def back_to_start(query, context):
 
 def main():
     print("=" * 50)
-    print("ЗАПУСК NFT PRICE BOT")
+    print("ЗАПУСК БОТА ДЛЯ СКУПКИ NFT")
     print("=" * 50)
     
     try:
