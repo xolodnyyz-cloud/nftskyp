@@ -188,6 +188,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await confirm_deal(query, context)
     elif query.data == 'reject_deal':
         await reject_deal(query, context)
+    elif query.data == 'gift_sent':
+        await gift_sent(query, context)
 
 async def start_selling(query, context):
     context.user_data['state'] = 'waiting_for_link'
@@ -427,23 +429,60 @@ async def confirm_deal(query, context):
         f"Мы не несём ответственности за сделки вне официального канала."
     )
     
+    # Добавляем кнопку "Подарок передан"
+    keyboard = [
+        [InlineKeyboardButton("✅ Подарок передан", callback_data='gift_sent')],
+        [InlineKeyboardButton("🏠 В главное меню", callback_data='back_to_main')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def gift_sent(query, context):
+    """Обработчик кнопки 'Подарок передан'"""
+    nft_info = context.user_data.get('nft_info', {})
+    payment_method = context.user_data.get('payment_method')
+    payment_name = context.user_data.get('payment_name')
+    
+    if payment_method == 'rub':
+        amount = nft_info.get('our_rub')
+        currency = '₽'
+    else:
+        amount = nft_info.get('our_stars')
+        currency = '⭐️'
+    
+    # Обновляем статус транзакции
+    data = load_data()
+    for t in data["transactions"]:
+        if t.get("nft_link") == nft_info.get('link') and t.get("user_id") == query.from_user.id:
+            t["status"] = "gift_sent"
+            t["gift_sent_at"] = datetime.now().isoformat()
+            break
+    save_data(data)
+    
+    text = (
+        f"✅ **Спасибо! Менеджер уведомлен о передаче подарка.**\n\n"
+        f"📎 **NFT:** {nft_info.get('link')}\n"
+        f"💵 **Сумма выплаты:** {amount} {currency}\n\n"
+        f"Ожидайте поступления оплаты в течение 5–15 минут.\n"
+        f"Если возникнут вопросы, обращайтесь к @{MANAGER_USERNAME}"
+    )
+    
     keyboard = [[InlineKeyboardButton("🏠 В главное меню", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
     
-    # Уведомление админам
+    # Уведомление админам о том, что подарок передан
     for admin_id in ADMIN_IDS:
         try:
             admin_text = (
-                f"🆕 **Новая подтверждённая сделка!**\n\n"
+                f"📦 **Подарок передан!**\n\n"
                 f"👤 **Пользователь:** @{query.from_user.username}\n"
                 f"🆔 **ID:** {query.from_user.id}\n"
                 f"📎 **NFT:** {nft_info.get('link')}\n"
-                f"💳 **Оплата:** {payment_name}\n"
                 f"💰 **Сумма:** {amount} {currency}\n"
-                f"📝 **Реквизиты:** {payment_details}\n"
-                f"📋 **ID транзакции:** {transaction['id']}"
+                f"⏰ **Время:** {datetime.now().strftime('%d.%m.%Y %H:%M')}"
             )
             await context.bot.send_message(admin_id, admin_text, parse_mode='Markdown')
         except Exception as e:
@@ -495,7 +534,7 @@ async def show_instructions(query, context):
         "4️⃣ Вы выбираете способ оплаты\n"
         "5️⃣ Вводите реквизиты для выплаты\n"
         "6️⃣ Подтверждаете сделку\n"
-        "7️⃣ Отправляете NFT менеджеру\n"
+        "7️⃣ Отправляете NFT менеджеру и нажимаете 'Подарок передан'\n"
         "8️⃣ Получаете оплату в течение 5-15 минут\n\n"
         "⚡ Вся сделка занимает не более 10 минут!"
     )
@@ -542,6 +581,7 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total_transactions = len(data["transactions"])
     pending = sum(1 for t in data["transactions"] if t["status"] == "pending")
     confirmed = sum(1 for t in data["transactions"] if t["status"] == "confirmed")
+    gift_sent = sum(1 for t in data["transactions"] if t["status"] == "gift_sent")
     
     stats = (
         f"📊 **Статистика бота**\n\n"
@@ -549,6 +589,7 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📦 **Всего транзакций:** {total_transactions}\n"
         f"⏳ **В обработке:** {pending}\n"
         f"✅ **Подтверждено:** {confirmed}\n"
+        f"📤 **Подарков передано:** {gift_sent}\n"
     )
     
     await update.message.reply_text(stats, parse_mode='Markdown')
