@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TOKEN = "8527173088:AAFENDpLWuQmRJe9ioRN4a1IbcnyqGgOkag"
 ADMIN_IDS = []  # Добавьте свой ID
-MANAGER_USERNAME = "hostelman"  # Юзернейм менеджера
+MANAGER_USERNAME = "hostelman"
 
 # Курсы конвертации
 STARS_TO_RUB = 1.6
@@ -37,7 +37,7 @@ def save_data(data):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# Класс для оценки NFT по ссылке
+# Класс для оценки NFT
 class NFTParser:
     NFT_PATTERN = r'https?://t\.me/nft/([a-zA-Z0-9_-]+)-(\d+)'
     
@@ -207,10 +207,22 @@ async def start_selling(query, context):
     
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
-async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.user_data.get('state') != 'waiting_for_link':
-        return
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Единый обработчик всех текстовых сообщений"""
+    text = update.message.text.strip()
+    current_state = context.user_data.get('state')
     
+    # Если ждем ссылку
+    if current_state == 'waiting_for_link':
+        await handle_nft_link(update, context)
+    
+    # Если ждем реквизиты
+    elif current_state == 'awaiting_details':
+        await handle_payment_details(update, context)
+    
+    # В любом другом случае игнорируем
+
+async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     link = update.message.text.strip()
     nft_data = NFTParser.parse_nft_link(link)
     
@@ -334,9 +346,6 @@ async def back_to_payment(query, context):
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def handle_payment_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.user_data.get('state') != 'awaiting_details':
-        return
-    
     details = update.message.text.strip()
     context.user_data['payment_details'] = details
     
@@ -552,16 +561,15 @@ def main():
     try:
         application = Application.builder().token(TOKEN).build()
         
+        # Регистрация обработчиков
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("stats", admin_stats))
         application.add_handler(CallbackQueryHandler(button_handler))
+        
+        # Единый обработчик для всех текстовых сообщений
         application.add_handler(MessageHandler(
             filters.TEXT & ~filters.COMMAND, 
-            handle_payment_details
-        ))
-        application.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND, 
-            handle_nft_link
+            handle_message
         ))
         
         print("✅ Бот успешно инициализирован!")
