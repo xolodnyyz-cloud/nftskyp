@@ -1,7 +1,7 @@
 import logging
 import re
 import random
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, FSInputFile
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import json
 import os
@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 TOKEN = "8527173088:AAFENDpLWuQmRJe9ioRN4a1IbcnyqGgOkag"
-ADMIN_IDS = [8127236386]  # Добавьте свой ID
-MANAGER_USERNAME = "nftsbuyer"  # Изменено на @nftsbuyer
+ADMIN_IDS = []  # Добавьте свой ID
+MANAGER_USERNAME = "nftsbuyer"
 
-# ID изображения (который вы получили от @GetIDsBot)
-NFT_IMAGE = "AgACAgIAAxkBAAID0GfwNL7d4OCfZbbj2DHeq3NSeB8EAAIxxBEAApRh0EmDx5EAAqVh0EkBAAMCAAN5AAM2BA"  # Ваш file_id
+# Путь к изображению бота
+BOT_PHOTO = FSInputFile("bot_photo.jpg")  # Файл должен лежать в той же папке, что и bot.py
 
 # Курсы конвертации
 STARS_TO_RUB = 1.6
@@ -166,7 +166,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Отправляем фото с подписью
     try:
         await update.message.reply_photo(
-            photo=NFT_IMAGE,
+            photo=BOT_PHOTO,
             caption=welcome_text,
             reply_markup=reply_markup,
             parse_mode='Markdown'
@@ -223,14 +223,13 @@ async def start_selling(query, context):
     
     # Отправляем фото с инструкцией
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()  # Удаляем предыдущее сообщение
     except Exception as e:
         logger.error(f"Ошибка отправки фото: {e}")
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
@@ -269,7 +268,7 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Отправляем фото с ошибкой
         try:
             await update.message.reply_photo(
-                photo=NFT_IMAGE,
+                photo=BOT_PHOTO,
                 caption=text,
                 reply_markup=reply_markup,
                 parse_mode='Markdown'
@@ -319,7 +318,7 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Отправляем фото с результатами
     try:
         await update.message.reply_photo(
-            photo=NFT_IMAGE,
+            photo=BOT_PHOTO,
             caption=text,
             reply_markup=reply_markup,
             parse_mode='Markdown'
@@ -350,14 +349,13 @@ async def select_payment_rub(query, context):
     
     # Отправляем фото с выбором оплаты
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
@@ -381,14 +379,13 @@ async def select_payment_stars(query, context):
     
     # Отправляем фото с выбором оплаты
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
@@ -415,14 +412,13 @@ async def back_to_payment(query, context):
     
     # Отправляем фото с выбором оплаты
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
@@ -461,7 +457,7 @@ async def handle_payment_details(update: Update, context: ContextTypes.DEFAULT_T
     # Отправляем фото с предложением
     try:
         await update.message.reply_photo(
-            photo=NFT_IMAGE,
+            photo=BOT_PHOTO,
             caption=text,
             reply_markup=reply_markup,
             parse_mode='Markdown'
@@ -525,14 +521,13 @@ async def confirm_deal(query, context):
     
     # Отправляем фото с подтверждением
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
@@ -571,14 +566,13 @@ async def gift_sent(query, context):
     
     # Отправляем фото с подтверждением
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
     
@@ -607,14 +601,13 @@ async def reject_deal(query, context):
     
     # Отправляем фото с отменой
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup)
     
@@ -637,14 +630,13 @@ async def check_another(query, context):
     
     # Отправляем фото с инструкцией
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
@@ -656,14 +648,13 @@ async def cancel_sale(query, context):
     
     # Отправляем фото с отменой
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(text, reply_markup=reply_markup)
     
@@ -688,14 +679,13 @@ async def show_instructions(query, context):
     
     # Отправляем фото с инструкцией
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=instructions,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=instructions,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(instructions, reply_markup=reply_markup, parse_mode='Markdown')
 
@@ -712,14 +702,13 @@ async def show_support(query, context):
     
     # Отправляем фото с поддержкой
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=support_text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=support_text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except:
         await query.edit_message_text(support_text, reply_markup=reply_markup, parse_mode='Markdown')
 
@@ -748,14 +737,13 @@ async def back_to_main(query, context):
     
     # Отправляем фото с приветствием
     try:
-        await query.edit_message_media(
-            media=InputMediaPhoto(
-                media=NFT_IMAGE,
-                caption=welcome_text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=reply_markup
+        await query.message.reply_photo(
+            photo=BOT_PHOTO,
+            caption=welcome_text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
+        await query.message.delete()
     except Exception as e:
         logger.error(f"Ошибка отправки фото: {e}")
         await query.edit_message_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
