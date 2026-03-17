@@ -1,7 +1,7 @@
 import logging
 import re
 import random
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import json
 import os
@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TOKEN = "8527173088:AAFENDpLWuQmRJe9ioRN4a1IbcnyqGgOkag"
 ADMIN_IDS = []  # Добавьте свой ID
-MANAGER_USERNAME = "hostelman"
+MANAGER_USERNAME = "nftsbuyer"  # Изменено на @nftsbuyer
+
+# ID изображения (который вы получили от @GetIDsBot)
+NFT_IMAGE = "AgACAgIAAxkBAAID0GfwNL7d4OCfZbbj2DHeq3NSeB8EAAIxxBEAApRh0EmDx5EAAqVh0EkBAAMCAAN5AAM2BA"  # Ваш file_id
 
 # Курсы конвертации
 STARS_TO_RUB = 1.6
@@ -160,7 +163,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+    # Отправляем фото с подписью
+    try:
+        await update.message.reply_photo(
+            photo=NFT_IMAGE,
+            caption=welcome_text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+    except Exception as e:
+        logger.error(f"Ошибка отправки фото: {e}")
+        # Если фото не отправилось, отправляем только текст
+        await update.message.reply_text(welcome_text, reply_markup=reply_markup)
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -207,7 +221,19 @@ async def start_selling(query, context):
     keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с инструкцией
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except Exception as e:
+        logger.error(f"Ошибка отправки фото: {e}")
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Единый обработчик всех текстовых сообщений"""
@@ -239,7 +265,17 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+        
+        # Отправляем фото с ошибкой
+        try:
+            await update.message.reply_photo(
+                photo=NFT_IMAGE,
+                caption=text,
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
+        except:
+            await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     analyzing_msg = await update.message.reply_text(
@@ -280,7 +316,17 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с результатами
+    try:
+        await update.message.reply_photo(
+            photo=NFT_IMAGE,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+    except:
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    
     context.user_data['state'] = 'awaiting_payment'
 
 async def select_payment_rub(query, context):
@@ -302,7 +348,18 @@ async def select_payment_rub(query, context):
     keyboard = [[InlineKeyboardButton("◀️ Назад к выбору оплаты", callback_data='back_to_payment')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с выбором оплаты
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def select_payment_stars(query, context):
     context.user_data['payment_method'] = 'stars'
@@ -322,7 +379,18 @@ async def select_payment_stars(query, context):
     keyboard = [[InlineKeyboardButton("◀️ Назад к выбору оплаты", callback_data='back_to_payment')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с выбором оплаты
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def back_to_payment(query, context):
     nft_info = context.user_data.get('nft_info', {})
@@ -345,7 +413,18 @@ async def back_to_payment(query, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с выбором оплаты
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def handle_payment_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
     details = update.message.text.strip()
@@ -379,7 +458,17 @@ async def handle_payment_details(update: Update, context: ContextTypes.DEFAULT_T
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с предложением
+    try:
+        await update.message.reply_photo(
+            photo=NFT_IMAGE,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+    except:
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    
     context.user_data['state'] = 'awaiting_confirmation'
 
 async def confirm_deal(query, context):
@@ -434,7 +523,18 @@ async def confirm_deal(query, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с подтверждением
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def gift_sent(query, context):
     """Обработчик кнопки 'Подарок передан'"""
@@ -469,7 +569,18 @@ async def gift_sent(query, context):
     keyboard = [[InlineKeyboardButton("🏠 В главное меню", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с подтверждением
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
     
     # Уведомление админам о том, что подарок передан
     for admin_id in ADMIN_IDS:
@@ -494,7 +605,19 @@ async def reject_deal(query, context):
     keyboard = [[InlineKeyboardButton("🏠 В главное меню", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup)
+    # Отправляем фото с отменой
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup)
+    
     context.user_data.clear()
 
 async def check_another(query, context):
@@ -512,7 +635,18 @@ async def check_another(query, context):
     keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с инструкцией
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def cancel_sale(query, context):
     text = "❌ Продажа отменена. Возвращаемся в главное меню."
@@ -520,7 +654,19 @@ async def cancel_sale(query, context):
     keyboard = [[InlineKeyboardButton("🏠 В главное меню", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(text, reply_markup=reply_markup)
+    # Отправляем фото с отменой
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(text, reply_markup=reply_markup)
+    
     context.user_data.clear()
 
 async def show_instructions(query, context):
@@ -532,7 +678,7 @@ async def show_instructions(query, context):
         "4. Бот озвучивает свою сумму в вашей валюте\n\n"
         "Пример: Я предлагаю вам за ваш NFT https://t.me/nft/HeartLocket-2  — 281.511 Рублей\n"
         "Если согласны — нажмите Да, если нет — Нет\n\n"
-        "5. При согласии — отправьте NFT менеджеру @hostelman\n"
+        "5. При согласии — отправьте NFT менеджеру @nftsbuyer\n"
         "6. Менеджер проверяет подарок и переводит оплату на ваши реквизиты\n\n"
         "⚡️ Среднее время сделки: 5–15 минут"
     )
@@ -540,7 +686,18 @@ async def show_instructions(query, context):
     keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(instructions, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с инструкцией
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=instructions,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(instructions, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def show_support(query, context):
     support_text = (
@@ -553,7 +710,18 @@ async def show_support(query, context):
     keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(support_text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с поддержкой
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=support_text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except:
+        await query.edit_message_text(support_text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def back_to_main(query, context):
     context.user_data.clear()
@@ -578,7 +746,19 @@ async def back_to_main(query, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Отправляем фото с приветствием
+    try:
+        await query.edit_message_media(
+            media=InputMediaPhoto(
+                media=NFT_IMAGE,
+                caption=welcome_text,
+                parse_mode='Markdown'
+            ),
+            reply_markup=reply_markup
+        )
+    except Exception as e:
+        logger.error(f"Ошибка отправки фото: {e}")
+        await query.edit_message_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
@@ -605,7 +785,7 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     print("=" * 50)
-    print("ЗАПУСК БОТА ДЛЯ СКУПКИ NFT")
+    print("ЗАПУСК БОТА ДЛЯ СКУПКИ NFT С ФОТО")
     print("=" * 50)
     
     try:
