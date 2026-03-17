@@ -97,8 +97,6 @@ GIFT_PRICES = {
     "plushpepe": (1042350, 744536),
     "preciouspeach": (59548, 42534),
     "prettyposy": (654, 467),
-    "rare bird": (4273, 3052),
-    "rare_bird": (4273, 3052),  # Альтернативное написание
     "rarebird": (4273, 3052),
     "recordplayer": (2025, 1446),
     "restlessjar": (688, 491),
@@ -147,7 +145,6 @@ GIFT_SYNONYMS = {
     "plush pepe": "plushpepe",
     "plushpepe": "plushpepe",
     "rare bird": "rarebird",
-    "rare_bird": "rarebird",
     "rarebird": "rarebird",
 }
 
@@ -636,7 +633,7 @@ async def show_instructions(query, context):
         "2. Бот находит цену в базе данных\n"
         "3. Вы выбираете способ оплаты\n"
         "4. Бот озвучивает свою сумму в вашей валюте (+30%)\n\n"
-        "Пример: Я предлагаю вам за ваш NFT https://t.me/nft/HeartLocket-2  — 337 740 Рублей\n"
+        "Пример: Я предлагаю вам за ваш NFT https://t.me/nft/HeartLocket-2  — 337,740 Рублей\n"
         "Если согласны — нажмите Да, если нет — Нет\n\n"
         "5. При согласии — отправьте NFT менеджеру @nftsbuyer\n"
         "6. Менеджер проверяет подарок и переводит оплату на ваши реквизиты\n\n"
