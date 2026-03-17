@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 TOKEN = "8527173088:AAFENDpLWuQmRJe9ioRN4a1IbcnyqGgOkag"
-ADMIN_IDS = []  # Добавьте свой ID
+ADMIN_IDS = [8127236386]  # Добавьте свой ID
 MANAGER_USERNAME = "nftsbuyer"  # Изменено на @nftsbuyer
 
 # ID изображения (который вы получили от @GetIDsBot)
