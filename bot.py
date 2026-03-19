@@ -631,7 +631,7 @@ async def confirm_deal(query, context):
     save_data(data)
     
     text = (
-        f"✅ **Отлично!**\n\n"
+        f"✅ Отлично!\n\n"
         f"Теперь вам нужно отправить ваш NFT менеджеру @{MANAGER_USERNAME}\n\n"
         f"📎 NFT: {nft_info.get('link')}\n"
         f"💵 Сумма выплаты: {amount:,} {currency}\n"
