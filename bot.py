@@ -633,12 +633,12 @@ async def confirm_deal(query, context):
     text = (
         f"✅ **Отлично!**\n\n"
         f"Теперь вам нужно отправить ваш NFT менеджеру @{MANAGER_USERNAME}\n\n"
-        f"📎 **NFT:** {nft_info.get('link')}\n"
-        f"💵 **Сумма выплаты:** {amount:,} {currency}\n"
-        f"💳 **Способ оплаты:** {payment_name}\n\n"
+        f"📎 NFT: {nft_info.get('link')}\n"
+        f"💵 Сумма выплаты: {amount:,} {currency}\n"
+        f"💳 Способ оплаты: {payment_name}\n\n"
         f"Менеджер проверит подарок и переведёт оплату на ваши реквизиты.\n"
         f"⚡️ Среднее время сделки: 5–15 минут\n\n"
-        f"⚠️ **Важно:** передавайте NFT ТОЛЬКО через @{MANAGER_USERNAME}. "
+        f"⚠️ Важно: передавайте NFT ТОЛЬКО через @{MANAGER_USERNAME}. "
         f"Мы не несём ответственности за сделки вне официального канала."
     )
     
