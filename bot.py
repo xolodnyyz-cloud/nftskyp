@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Конфигурация
-TOKEN = "8527173088:AAFENDpLWuQmRJe9ioRN4a1IbcnyqGgOkag"
+TOKEN = "8646107306:AAGlmH0RcrrPg39pakoM7RXI8BEWpl9FmwM"
 ADMIN_IDS = []  # Добавьте свой ID
 MANAGER_USERNAME = "nftsbuyer"
 
