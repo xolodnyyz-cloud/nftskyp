@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TOKEN = "8646107306:AAGlmH0RcrrPg39pakoM7RXI8BEWpl9FmwM"
 ADMIN_IDS = []  # Добавьте свой ID
-MANAGER_USERNAME = "buyer_supportz"
+MANAGER_USERNAME = "buyer_supportz"  # Изменено на новый юзернейм
 
 # Путь к файлу с фото (должен лежать в той же папке)
 PHOTO_FILE = "bot_photo.jpg"
@@ -751,7 +751,7 @@ async def show_instructions(query, context):
         "4. Бот озвучивает свою сумму в вашей валюте (+30%)\n\n"
         "Пример: Я предлагаю вам за ваш NFT https://t.me/nft/HeartLocket-2  — 562,900 Рублей\n"
         "Если согласны — нажмите Да, если нет — Нет\n\n"
-        "5. При согласии — отправьте NFT менеджеру @nftsbuyer\n"
+        "5. При согласии — отправьте NFT менеджеру @buyer_supportz\n"
         "6. Менеджер проверяет подарок и переводит оплату на ваши реквизиты\n\n"
         "⚡️ Среднее время сделки: 5–15 минут"
     )
@@ -842,6 +842,8 @@ def main():
     print("=" * 50)
     print("ЗАПУСК БОТА ДЛЯ СКУПКИ NFT")
     print("=" * 50)
+    print(f"Токен: {TOKEN[:10]}...")
+    print(f"Менеджер: @{MANAGER_USERNAME}")
     
     # Проверяем наличие фото
     if os.path.exists(PHOTO_FILE):
