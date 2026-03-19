@@ -164,8 +164,8 @@ async def send_with_photo(chat_id, text, context, reply_markup=None, photo_file=
                     chat_id=chat_id,
                     photo=photo,
                     caption=text,
-                    reply_markup=reply_markup,
-                    parse_mode='Markdown'
+                    reply_markup=reply_markup
+                    # Убрали parse_mode='Markdown'
                 )
             logger.info(f"Фото отправлено пользователю {chat_id}")
         else:
@@ -173,16 +173,16 @@ async def send_with_photo(chat_id, text, context, reply_markup=None, photo_file=
             await context.bot.send_message(
                 chat_id=chat_id,
                 text=text,
-                reply_markup=reply_markup,
-                parse_mode='Markdown'
+                reply_markup=reply_markup
+                # Убрали parse_mode='Markdown'
             )
     except Exception as e:
         logger.error(f"Ошибка при отправке фото: {e}")
         await context.bot.send_message(
             chat_id=chat_id,
             text=text,
-            reply_markup=reply_markup,
-            parse_mode='Markdown'
+            reply_markup=reply_markup
+            # Убрали parse_mode='Markdown'
         )
 
 async def edit_message(query, text, reply_markup=None):
@@ -193,16 +193,16 @@ async def edit_message(query, text, reply_markup=None):
             # Если это сообщение с фото - редактируем подпись
             await query.edit_message_caption(
                 caption=text,
-                reply_markup=reply_markup,
-                parse_mode='Markdown'
+                reply_markup=reply_markup
+                # Убрали parse_mode='Markdown'
             )
             logger.info("Отредактирована подпись к фото")
         elif query.message.text:
             # Если это обычное сообщение - редактируем текст
             await query.edit_message_text(
                 text=text,
-                reply_markup=reply_markup,
-                parse_mode='Markdown'
+                reply_markup=reply_markup
+                # Убрали parse_mode='Markdown'
             )
             logger.info("Отредактировано текстовое сообщение")
         else:
@@ -210,16 +210,16 @@ async def edit_message(query, text, reply_markup=None):
             logger.warning("Неизвестный тип сообщения, отправляем новое")
             await query.message.reply_text(
                 text=text,
-                reply_markup=reply_markup,
-                parse_mode='Markdown'
+                reply_markup=reply_markup
+                # Убрали parse_mode='Markdown'
             )
     except Exception as e:
         logger.error(f"Ошибка при редактировании: {e}")
         # Пробуем отправить новое сообщение
         await query.message.reply_text(
             text=text,
-            reply_markup=reply_markup,
-            parse_mode='Markdown'
+            reply_markup=reply_markup
+            # Убрали parse_mode='Markdown'
         )
 
 # ============================================
@@ -697,7 +697,7 @@ async def gift_sent(query, context):
                 f"💰 Сумма: {amount:,} {currency}\n"
                 f"⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
             )
-            await context.bot.send_message(admin_id, admin_text, parse_mode='Markdown')
+            await context.bot.send_message(admin_id, admin_text)
         except Exception as e:
             logger.error(f"Failed to notify admin {admin_id}: {e}")
     
@@ -829,7 +829,7 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📤 Подарков передано: {gift_sent}\n"
     )
     
-    await update.message.reply_text(stats, parse_mode='Markdown')
+    await update.message.reply_text(stats)
 
 def load_data():
     if os.path.exists(DATA_FILE):
