@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TOKEN = "8646107306:AAGlmH0RcrrPg39pakoM7RXI8BEWpl9FmwM"
 ADMIN_IDS = []  # Добавьте свой ID
-MANAGER_USERNAME = "buyer_supportz"  # Изменено на новый юзернейм
+MANAGER_USERNAME = "buyer_supportz"
 
 # Путь к файлу с фото (должен лежать в той же папке)
 PHOTO_FILE = "bot_photo.jpg"
@@ -215,6 +215,7 @@ async def edit_message(query, text, reply_markup=None):
             )
     except Exception as e:
         logger.error(f"Ошибка при редактировании: {e}")
+        # Пробуем отправить новое сообщение
         await query.message.reply_text(
             text=text,
             reply_markup=reply_markup,
@@ -313,6 +314,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    
+    # Логируем нажатие кнопки
+    logger.info(f"Нажата кнопка: {query.data} от пользователя {query.from_user.id}")
     
     if query.data == 'sell':
         await start_selling(query, context)
