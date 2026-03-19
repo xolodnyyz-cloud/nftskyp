@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TOKEN = "8646107306:AAGlmH0RcrrPg39pakoM7RXI8BEWpl9FmwM"
 ADMIN_IDS = []  # Добавьте свой ID
-MANAGER_USERNAME = "nftsbuyer"
+MANAGER_USERNAME = "buyer_supportz"
 
 # Путь к файлу с фото (должен лежать в той же папке)
 PHOTO_FILE = "bot_photo.jpg"
