@@ -9,7 +9,7 @@ import asyncio
 
 # Настройка логирования
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(astime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TOKEN = "8646107306:AAGlmH0RcrrPg39pakoM7RXI8BEWpl9FmwM"
 ADMIN_IDS = []  # Добавьте свой ID
-MANAGER_USERNAME = "buyer_supportz"  # Без подчеркивания
+MANAGER_USERNAME = "buyer_supportz"  # Юзернейм менеджера
 
 # Путь к файлу с фото (должен лежать в той же папке)
 PHOTO_FILE = "bot_photo.jpg"
